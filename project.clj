@@ -14,6 +14,5 @@
                       [com.bhauman/rebel-readline-cljs "0.1.4"]]}}
   :aliases {
             "fig" ["trampoline" "run" "-m" "figwheel.main"]
-            "dev:cruel" ["trampoline" "run" "-m" "figwheel.main" "--build" "cruel" "--repl"]
             "dev" ["trampoline" "run" "-m" "figwheel.main" "--build" "dev" "--repl"]}
   :resource-paths ["target" "resources"])

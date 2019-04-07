@@ -23,13 +23,14 @@
 ;     :done                                                   ;; only todos whose :done is true
 ;     })
 ; (s/def ::db (s/keys :req-un [::todos ::showing]))
+(s/def ::version int?)
 (s/def ::id int?)
 (s/def ::text string?)
 (s/def ::entry (s/keys :req-un [::id ::text]))
 (s/def ::entries (s/and 
                     (s/map-of ::id ::entry)
                     #(instance? PersistentTreeMap %)))
-(s/def ::db (s/keys :req-un [::entries]))
+(s/def ::db (s/keys :req-un [::entries  ::version]))
 
 ;; -- Default app-db Value  ---------------------------------------------------
 ;;
@@ -41,7 +42,9 @@
 ;;
 
 (def default-db
-  {:entries (sorted-map 
+  {
+    :version 1
+    :entries (sorted-map 
                         1 {:id 1 :text "First entry"})})
 
 ;; -- Local Storage  ----------------------------------------------------------
@@ -64,12 +67,18 @@
 ;;
 ;; We must supply a `sorted-map` but in LocalStore it is stored as a `map`.
 ;;
+(defn local-store->timecap
+  "Reads time-cap from the localStorage"
+  []
+  (into 
+    (sorted-map)
+    (some->> 
+      (.getItem js/localStorage ls-key)
+      (cljs.reader/read-string))))
+  
 (re-frame/reg-cofx
   :local-store-timecap
   (fn [cofx _]
       ;; put the localstore todos into the coeffect under :local-store-timecap
-      (assoc cofx :local-store-timecap
-             ;; read in todos from localstore, and process into a sorted map
-             (into (sorted-map)
-                   (some->> (.getItem js/localStorage ls-key)
-                            (cljs.reader/read-string)))))) 
+      (assoc cofx :local-store-timecap (local-store->timecap))))
+

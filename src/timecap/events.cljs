@@ -8,8 +8,9 @@
 (defn check-and-throw
   "Throws an exception if `db` doesn't match the Spec `a-spec`."
   [a-spec db]
-  (when-not (s/valid? a-spec db)
-    (throw (ex-info (str "spec check failed: " (s/explain-str a-spec db)) {}))))
+  db)
+  ; (when-not (s/valid? a-spec db)
+  ;   (throw (ex-info (str "spec check failed: " (s/explain-str a-spec db)) {}))))
 ;; now we create an interceptor using `after`
 (def check-spec-interceptor (after (partial check-and-throw :timecap.db/db)))
 
@@ -18,8 +19,8 @@
 
 ;; -- Interceptor Chain ------------------------------------------------------
 (def todo-interceptors [check-spec-interceptor 
-                        (path :entries)
-                        ->local-store])
+                        ->local-store
+                        (path :entries)])
 
 ;; -- Helpers -----------------------------------------------------------------
 
@@ -43,21 +44,29 @@
 ;; Advanced topic:  we inject the todos currently stored in LocalStore
 ;; into the first, coeffect parameter via use of the interceptor
 ;;    `(inject-cofx :local-store-timecap)`
-; TODO restore this better init
-; (reg-event-fx                 ;; part of the re-frame API
-;   :initialise-db              ;; event id being handled
-
-;   ;; the interceptor chain (a vector of 2 interceptors in this case)
-;   [(inject-cofx :local-store-timecap) ;; gets todos from localstore, and puts value into coeffects arg
-;    check-spec-interceptor]          ;; after event handler runs, check app-db for correctness. Does it still match Spec?
-
-;   ;; the event handler (function) being registered
-;   (fn [{:keys [db local-content]} _]                  ;; take 2 values from coeffects. Ignore event vector itself.
-;     {:db (assoc default-db :entries local-content)}))   ;; all hail the new state to be put in app-db
-(reg-event-db
+; Special function to test if the stored content a version.
+; Given that the stored content is unknown, its structure may not be a map as expected
+(defn get-stored-version
+  [content]
+  (cond
+    (not (map? content)) nil
+    (not (some #{:version} (keys content))) nil
+    :else (:version content)))
+(defn integrate-local-storage
+  [current-content stored-content]
+  (let [ current-version (:version current-content)
+         stored-version (get-stored-version stored-content)]
+    (if (= current-version stored-version)
+        {:db (merge current-content stored-content)}
+        ; drop the stored content
+        {:db current-content})))
+(reg-event-fx  
   :initialise-db
-  (fn [_ _]
-    default-db))
+  [
+    (inject-cofx :local-store-timecap)
+    check-spec-interceptor]
+  (fn [{:keys [local-store-timecap]} _] (integrate-local-storage default-db local-store-timecap)))
+  
 
 ;; usage:  (dispatch [:set-showing  :active])
 ;; This event is dispatched when the user clicks on one of the 3
