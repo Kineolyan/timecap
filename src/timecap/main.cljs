@@ -47,10 +47,18 @@
 ;;    }
 ;; So this is the entry function that kicks off the app once the HTML is loaded.
 ;;
+(defn render-app
+  []
+  (reagent/render [timecap.views/app]
+                  (.getElementById js/document "app")))
+                
 (defn ^:export main
   []
   ;; Render the UI into the HTML's <div id="app" /> element
   ;; The view function `todomvc.views/todo-app` is the
   ;; root view for the entire UI.
-  (reagent/render [timecap.views/app]
-                  (.getElementById js/document "app")))
+  (render-app))
+
+(defn ^:after-load re-render 
+  []
+  (render-app))

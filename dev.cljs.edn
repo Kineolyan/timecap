@@ -1,4 +1,6 @@
 ^{
   :log-syntax-error-style :concise
-  :css-dirs ["resources/public/css"]}
+  :css-dirs ["resources/public/css"]
+  :watch-dirs ["src"]
+  :wait-time-ms 500}
 {:main timecap.main}

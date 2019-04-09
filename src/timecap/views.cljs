@@ -3,49 +3,34 @@
             [re-frame.core :refer [subscribe dispatch]]
             [clojure.string :as str]))
 
-; (defn todo-input [{:keys [title on-save on-stop]}]
-;   (let [val  (reagent/atom title)
-;         stop #(do (reset! val "")
-;                   (when on-stop (on-stop)))
-;         save #(let [v (-> @val str str/trim)]
-;                 (on-save v)
-;                 (stop))]
-;     (fn [props]
-;       [:input (merge (dissoc props :on-save :on-stop :title)
-;                      {:type        "text"
-;                       :value       @val
-;                       :auto-focus  true
-;                       :on-blur     save
-;                       :on-change   #(reset! val (-> % .-target .-value))
-;                       :on-key-down #(case (.-which %)
-;                                       13 (save)
-;                                       27 (stop)
-;                                       nil)})])))
+(defn new-entry-input [{:keys [title on-save on-stop]}]
+  (let [val  (reagent/atom title)
+        stop #(do (reset! val "")
+                  (when on-stop (on-stop)))
+        save #(let [v (-> @val str str/trim)]
+                (on-save v)
+                (stop))]
+    (fn [props]
+      [:input (merge (dissoc props :on-save :on-stop :title)
+                     {:type        "text"
+                      :value       @val
+                      :auto-focus  true
+                      :on-blur     save
+                      :on-change   #(reset! val (-> % .-target .-value))
+                      :on-key-down #(case (.-which %)
+                                      13 (save)
+                                      27 (stop)
+                                      nil)})])))
 
-; (defn todo-item
-;   []
-;   (let [editing (reagent/atom false)]
-;     (fn [{:keys [id done title]}]
-;       [:li {:class (str (when done "completed ")
-;                         (when @editing "editing"))}
-;         [:div.view
-;           [:input.toggle
-;             {:type "checkbox"
-;              :checked done
-;              :on-change #(dispatch [:toggle-done id])}]
-;           [:label
-;             {:on-double-click #(reset! editing true)}
-;             title]
-;           [:button.destroy
-;             {:on-click #(dispatch [:delete-todo id])}]]
-;         (when @editing
-;           [todo-input
-;             {:class "edit"
-;              :title title
-;              :on-save #(if (seq %)
-;                           (dispatch [:save id %])
-;                           (dispatch [:delete-todo id]))
-;              :on-stop #(reset! editing false)}])])))
+(defn entry-item
+  []
+  (fn [{:keys [id text]}]
+    [:li
+      [:div.view
+        [:label text]
+        [:button.destroy
+          {:on-click #(dispatch [:delete-entry id])}
+          "-"]]]))
 
 
 (defn task-list
@@ -54,7 +39,7 @@
       [:section#main
         [:ul#todo-list
           (for [entry entries]
-            ^{:key (:id entry)} [:li (:text entry)])]]))
+            ^{:key (:id entry)} [entry-item entry])]]))
 
 
 ; (defn footer-controls
@@ -90,9 +75,9 @@
 (defn app
   []
   [:div
-    [:button.add
-      {:on-click #(dispatch [:add-entry "Hello"])}
-      "Add new entry"]
-    (task-list)
-    [:footer#info
-      [:p "Double-click to edit a todo"]]])
+    [:div
+      [new-entry-input
+        {:id "new-entry"
+          :placeholder "Your thought about the future?"
+          :on-save #(when (seq %) (dispatch [:add-entry %]))}]]
+    (task-list)])

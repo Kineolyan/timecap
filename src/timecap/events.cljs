@@ -53,10 +53,9 @@
     :else (:version content)))
 (defn integrate-local-storage
   [current-content stored-content]
-  (let [ current-version (:version current-content)
-         stored-version (get-stored-version stored-content)]
-    (if (= current-version stored-version)
-        {:db (merge current-content stored-content)}
+  (let [ stored-version (get-stored-version stored-content)]
+    (if (= 1 stored-version)
+        {:db (assoc current-content :entries (:entries stored-content))}
         ; drop the stored content
         {:db current-content})))
 (reg-event-fx  
@@ -111,12 +110,18 @@
 
 
 ;; usage:  (dispatch [:add-todo  "a description string"])
-(reg-event-db                     ;; given the text, create a new todo
+(reg-event-db
   :add-entry
   todo-interceptors
   (fn [entries [_ text]]
     (let [id (allocate-next-id entries)]
       (assoc entries id {:id id :text text}))))
+
+(reg-event-db
+  :delete-entry
+  todo-interceptors
+  (fn [entries [_ id]]
+    (dissoc entries id)))
 
 ; (reg-event-db
 ;   :toggle-done

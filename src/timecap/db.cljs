@@ -23,12 +23,11 @@
 ;     :done                                                   ;; only todos whose :done is true
 ;     })
 ; (s/def ::db (s/keys :req-un [::todos ::showing]))
-(s/def ::version int?)
 (s/def ::id int?)
 (s/def ::text string?)
 (s/def ::entry (s/keys :req-un [::id ::text]))
 (s/def ::entries (s/map-of ::id ::entry))
-(s/def ::db (s/keys :req-un [::entries ::version]))
+(s/def ::db (s/keys :req-un [::entries]))
 
 ;; -- Default app-db Value  ---------------------------------------------------
 ;;
@@ -41,7 +40,6 @@
 
 (def default-db
   {
-    :version 1
     :entries (sorted-map 
                         1 {:id 1 :text "First entry"})})
 
@@ -51,7 +49,7 @@
 (defn timecap->local-store
   "Puts time-cap into localStorage"
   [db]
-  (.setItem js/localStorage ls-key (str db)))
+  (.setItem js/localStorage ls-key (str {:db db :version 1})))
 
 
 ;; -- cofx Registrations  -----------------------------------------------------
