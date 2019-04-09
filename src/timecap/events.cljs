@@ -54,8 +54,8 @@
 (defn integrate-local-storage
   [current-content stored-content]
   (let [ stored-version (get-stored-version stored-content)]
-    (if (= 1 stored-version)
-        {:db (assoc current-content :entries (:entries stored-content))}
+    (if (= timecap.db/app-version stored-version)
+        {:db (assoc current-content :entries (-> stored-content :db :entries))}
         ; drop the stored content
         {:db current-content})))
 (reg-event-fx  
@@ -64,49 +64,6 @@
     (inject-cofx :local-store-timecap)
     check-spec-interceptor]
   (fn [{:keys [local-store-timecap]} _] (integrate-local-storage default-db local-store-timecap)))
-  
-
-;; usage:  (dispatch [:set-showing  :active])
-;; This event is dispatched when the user clicks on one of the 3
-;; filter buttons at the bottom of the display.
-; (reg-event-db      ;; part of the re-frame API
-;   :set-showing     ;; event-id
-
-;   ;; only one interceptor
-;   [check-spec-interceptor]       ;; after event handler runs, check app-db for correctness. Does it still match Spec?
-
-;   ;; handler
-;   (fn [db [_ new-filter-kw]]     ;; new-filter-kw is one of :all, :active or :done
-;     (assoc db :showing new-filter-kw)))
-
-;; NOTE: below is a rewrite of the event handler (above) using a `path` Interceptor
-;; You'll find it illuminating to compare this rewrite with the original.
-;;
-;; A `path` interceptor has BOTH a before and after action.
-;; When you create one, you supply "a path" into `app-db`, like:
-;; [:a :b 1]
-;; The job of "before" is to replace the app-db with the value
-;; of `app-db` at the nominated path. And, then, "after" to
-;; take the event handler returned value and place it back into
-;; app-db at the nominated path.  So the event handler works
-;; with a particular, narrower path within app-db, not all of it.
-;;
-;; So, `path` operates a little like `update-in`
-;;
-; #_(reg-event-db
-;   :set-showing
-
-;   ;; this now a chain of 2 interceptors. Note use of `path`
-;   [check-spec-interceptor (path :showing)]
-
-;   ;; The event handler
-;   ;; Because of the `path` interceptor above, the 1st parameter to
-;   ;; the handler below won't be the entire 'db', and instead will
-;   ;; be the value at the path `[:showing]` within db.
-;   ;; Equally the value returned will be the new value for that path
-;   ;; within app-db.
-;   (fn [old-showing-value [_ new-showing-value]]
-;     new-showing-value))                  ;; return new state for the path
 
 
 ;; usage:  (dispatch [:add-todo  "a description string"])
@@ -114,8 +71,18 @@
   :add-entry
   todo-interceptors
   (fn [entries [_ text]]
-    (let [id (allocate-next-id entries)]
-      (assoc entries id {:id id :text text}))))
+    (let [
+            id (timecap.db/generate-id)
+            t-id (timecap.db/generate-id)]
+      (assoc 
+        entries 
+        id 
+        {
+          :id id 
+          :text text 
+          :date "12/04/2027"
+          :timeline-id t-id
+          :edition-date "05/04/2019"}))))
 
 (reg-event-db
   :delete-entry
@@ -129,36 +96,3 @@
 ;   (fn [todos [_ id]]
 ;     (update-in todos [id :done] not)))
 
-
-; (reg-event-db
-;   :save
-;   todo-interceptors
-;   (fn [todos [_ id title]]
-;     (assoc-in todos [id :title] title)))
-
-
-; (reg-event-db
-;   :delete-todo
-;   todo-interceptors
-;   (fn [todos [_ id]]
-;     (dissoc todos id)))
-
-
-; (reg-event-db
-;   :clear-completed
-;   todo-interceptors
-;   (fn [todos _]
-;     (let [done-ids (->> (vals todos)         ;; which todos have a :done of true
-;                         (filter :done)
-;                         (map :id))]
-;       (reduce dissoc todos done-ids))))      ;; delete todos which are done
-
-
-; (reg-event-db
-;   :complete-all-toggle
-;   todo-interceptors
-;   (fn [todos _]
-;     (let [new-done (not-every? :done (vals todos))]   ;; work out: toggle true or false?
-;       (reduce #(assoc-in %1 [%2 :done] new-done)
-;               todos
-;               (keys todos)))))

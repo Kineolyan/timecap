@@ -1,8 +1,8 @@
 (ns timecap.db
   (:require [cljs.reader]
             [cljs.spec.alpha :as s]
-            [re-frame.core :as re-frame]))
-
+            [re-frame.core :as re-frame]
+            [goog.string :as jstrings]))
 
 ;; -- Spec --------------------------------------------------------------------
 ;;
@@ -23,9 +23,19 @@
 ;     :done                                                   ;; only todos whose :done is true
 ;     })
 ; (s/def ::db (s/keys :req-un [::todos ::showing]))
-(s/def ::id int?)
+(defn generated-id?
+  [value]
+  ; TODO implement a real check for xxxx-xxxx-xxxx-xxxx
+  (string? value))
+(defn a-date? 
+  [value]
+  (string? value))
+(s/def ::id string?)
 (s/def ::text string?)
-(s/def ::entry (s/keys :req-un [::id ::text]))
+(s/def ::date a-date?)
+(s/def ::edition-date a-date?)
+(s/def ::timeline-id string?)
+(s/def ::entry (s/keys :req-un [::id ::text ::date ::timeline-id ::edition-date]))
 (s/def ::entries (s/map-of ::id ::entry))
 (s/def ::db (s/keys :req-un [::entries]))
 
@@ -37,19 +47,33 @@
 ;;   1.  `core.cljs` for  "(dispatch-sync [:initialise-db])"
 ;;   2.  `events.cljs` for the registration of :initialise-db handler
 ;;
+(def generation-seed (atom 0))
+(defn generate-id
+  []
+  (let [id (swap! generation-seed inc)]
+    (jstrings/format "abcd-1234-xyza-%04d" id)))
 
 (def default-db
-  {
-    :entries (sorted-map 
-                        1 {:id 1 :text "First entry"})})
+  (let [first-id (generate-id)]
+    {
+      :entries 
+      (sorted-map 
+        first-id
+        {
+          :id first-id
+          :text "Quand je serai vieux, Je ne serai pas chiant."
+          :date "13/09/2048"
+          :timeline-id (generate-id)
+          :edition-date "24/03/2019"})}))
 
 ;; -- Local Storage  ----------------------------------------------------------
 
+(def app-version 3)
 (def ls-key "timecap-reframe")
 (defn timecap->local-store
   "Puts time-cap into localStorage"
   [db]
-  (.setItem js/localStorage ls-key (str {:db db :version 1})))
+  (.setItem js/localStorage ls-key (str {:db db :version app-version})))
 
 
 ;; -- cofx Registrations  -----------------------------------------------------

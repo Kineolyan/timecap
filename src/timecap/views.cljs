@@ -24,13 +24,18 @@
 
 (defn entry-item
   []
-  (fn [{:keys [id text]}]
+  (fn [{:keys [id text date edition-date]}]
     [:li
       [:div.view
-        [:label text]
-        [:button.destroy
-          {:on-click #(dispatch [:delete-entry id])}
-          "-"]]]))
+        [:div
+          [:label text]
+          [:button.destroy
+            {:on-click #(dispatch [:delete-entry id])}
+            "-"]]
+        [:div
+          [:label (str "Target date: " date)]]
+        [:div
+          [:i (str "(edited: " edition-date ")")]]]]))
 
 
 (defn task-list
