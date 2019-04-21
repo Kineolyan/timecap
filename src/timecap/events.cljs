@@ -55,7 +55,7 @@
   [current-content stored-content]
   (let [ stored-version (get-stored-version stored-content)]
     (if (= timecap.db/app-version stored-version)
-        {:db (assoc current-content :entries (-> stored-content :db :entries))}
+        {:db (assoc current-content :entries (get-in stored-content [:db :entries]))}
         ; drop the stored content
         {:db current-content})))
 (reg-event-fx  

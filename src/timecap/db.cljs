@@ -37,7 +37,8 @@
 (s/def ::timeline-id string?)
 (s/def ::entry (s/keys :req-un [::id ::text ::date ::timeline-id ::edition-date]))
 (s/def ::entries (s/map-of ::id ::entry))
-(s/def ::db (s/keys :req-un [::entries]))
+(s/def ::new-form (s/keys :req-un [::text ::date] :opt [::timeline-id]))
+(s/def ::db (s/keys :req-un [::entries ::new-form]))
 
 ;; -- Default app-db Value  ---------------------------------------------------
 ;;
@@ -56,15 +57,19 @@
 (def default-db
   (let [first-id (generate-id)]
     {
+      :new-form
+      { 
+        :text ""
+        :date "12/04/2017"}
       :entries 
-      (sorted-map 
+      {
         first-id
         {
           :id first-id
           :text "Quand je serai vieux, Je ne serai pas chiant."
           :date "13/09/2048"
           :timeline-id (generate-id)
-          :edition-date "24/03/2019"})}))
+          :edition-date "24/03/2019"}}}))
 
 ;; -- Local Storage  ----------------------------------------------------------
 
@@ -73,7 +78,9 @@
 (defn timecap->local-store
   "Puts time-cap into localStorage"
   [db]
-  (.setItem js/localStorage ls-key (str {:db db :version app-version})))
+  (.setItem js/localStorage ls-key (str {
+                                          :db (dissoc db :new-form) 
+                                          :version app-version})))
 
 
 ;; -- cofx Registrations  -----------------------------------------------------
