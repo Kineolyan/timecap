@@ -1,10 +1,10 @@
 (ns timecap.views
-  (:require [reagent.core  :as reagent]
+  (:require [reagent.core  :as r]
             [re-frame.core :refer [subscribe dispatch]]
             [clojure.string :as str]))
 
-(defn new-entry-input [{:keys [title on-save on-stop]}]
-  (let [val  (reagent/atom title)
+(defn entry-input [{:keys [title on-save on-stop]}]
+  (let [val  (r/atom title)
         stop #(do (reset! val "")
                   (when on-stop (on-stop)))
         save #(let [v (-> @val str str/trim)]
@@ -21,6 +21,36 @@
                                       13 (save)
                                       27 (stop)
                                       nil)})])))
+  
+
+(defn create-complete-entry
+  [content date]
+  ; no need for a cas loop for CLJS, single threaded
+  (let [c @content d @date]
+    (when (and (not (str/blank? c)) (not (str/blank? d)))
+      (do
+        (dispatch :add-entry c d)
+        (reset! content "")
+        (reset! date "")))))
+
+
+(defn new-entry-form [{:keys [on-save on-cancel]}]
+  (let [content (r/atom "")
+        target-date (r/atom "")
+        do-save (fn [_] create-complete-entry content target-date)]
+    (fn [props]
+      ^{:key (:id props)}
+      [:div
+        [entry-input
+          { :placeholder "What do you think about the future?"
+            :on-save do-save}]
+        [entry-input
+          { :placeholder "Target date"
+            :on-save do-save}]
+        [:button 
+          {:on-click #(do-save nil)}
+          "Submit"]])))
+
 
 (defn entry-item
   []
@@ -66,23 +96,11 @@
 ;         "Clear completed"])]))
 
 
-; (defn task-entry
-;   []
-;   [:header#header
-;     [:h1 "todos"]
-;     [todo-input
-;       {:id "new-todo"
-;        :placeholder "What needs to be done?"
-;        :on-save #(when (seq %)
-;                     (dispatch [:add-todo %]))}]])
-
-
 (defn app
   []
   [:div
     [:div
-      [new-entry-input
+      [new-entry-form
         {:id "new-entry"
-          :placeholder "Your thought about the future?"
           :on-save #(when (seq %) (dispatch [:add-entry %]))}]]
     (task-list)])

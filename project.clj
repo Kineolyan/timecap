@@ -5,7 +5,8 @@
                   [re-frame "0.10.5"]
                   [binaryage/devtools "0.9.10"]
                   [day8.re-frame/tracing "0.5.1"]
-                  [clj-commons/secretary "1.2.4"]]
+                  [clj-commons/secretary "1.2.4"]
+                  [com.andrewmcveigh/cljs-time "0.5.2"]]
   :profiles
     {:dev
       {:dependencies [[org.clojure/clojurescript "1.10.339"]
