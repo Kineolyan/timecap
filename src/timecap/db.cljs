@@ -50,9 +50,18 @@
 ;;
 (def generation-seed (atom 0))
 (defn generate-id
-  []
-  (let [id (swap! generation-seed inc)]
-    (jstrings/format "abcd-1234-xyza-%04d" id)))
+  (
+    []
+    (let [id (swap! generation-seed inc)]
+      (jstrings/format "abcd-1234-xyza-%04d" id)))
+  (
+    [is-valid?]
+    (loop [id (generate-id)]
+      (if 
+        (is-valid? id)
+        id
+        (recur (generate-id))))))
+  
 
 (def default-db
   (let [first-id (generate-id)]
@@ -72,6 +81,17 @@
           :edition-date "24/03/2019"}}}))
 
 ;; -- Db operations -------------------------------------------
+
+(defn is-valid-new-entry-id?
+  [db id]
+  (not
+    (contains? (:entries db) id)))
+(defn is-valid-new-timeline-id?
+  [db id]
+  (not 
+    (some
+      #{id}  
+      (map #(:timeline-id %) (-> db (:entries) (vals))))))
 
 (defn add-entry
   [db entry]

@@ -114,8 +114,8 @@
         {:keys [text date]} (:new-form db)]
     (assoc 
       (get-in db [:new-form])
-      :id (generate-id)
-      :timeline-id (generate-id)
+      :id (generate-id #(ndb/is-valid-new-entry-id? db %))
+      :timeline-id (generate-id #(ndb/is-valid-new-timeline-id? db %))
       :text (get-in db [:new-form :text])
       :edition-date "17/05/2019")))
 
