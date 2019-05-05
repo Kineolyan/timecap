@@ -1,10 +1,27 @@
 (ns timecap.subs
-  (:require [re-frame.core :refer [reg-sub subscribe]]))
+  (:require [re-frame.core :refer [reg-sub subscribe]]
+            [clojure.string :as str]))
 
 (reg-sub
   :entries
   (fn [db _]
     (vals (:entries db))))
+
+(defn valid-new-entry?
+  "Checks if a new entry is valid and can be added to the DB"
+  [{:keys [text timeline-id date]}]
+  (and
+    (not (str/blank? text))
+    (not (str/blank? date))))
+
+(reg-sub
+  :new-form
+  (fn [db _]
+    (let [content (:new-form db)
+          valid? (valid-new-entry? content)]
+      {
+        :entry content
+        :valid? valid?})))
 
 ;; -------------------------------------------------------------------------------------
 ;; Layer 2

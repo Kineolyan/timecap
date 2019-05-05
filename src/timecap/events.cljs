@@ -1,6 +1,6 @@
 (ns timecap.events
   (:require
-    [timecap.db    :refer [default-db timecap->local-store]]
+    [timecap.db    :as ndb :refer [default-db timecap->local-store generate-id]]
     [re-frame.core :refer [reg-event-db reg-event-fx inject-cofx path after]]
     [cljs.spec.alpha :as s]))
 
@@ -14,12 +14,19 @@
 (def check-spec-interceptor (after (partial check-and-throw :timecap.db/db)))
 
 ;; Store to local storage
-(def ->local-store (after timecap->local-store))
+(def ->local-store-interceptor (after timecap->local-store))
 
 ;; -- Interceptor Chain ------------------------------------------------------
-(def todo-interceptors [check-spec-interceptor 
-                        ->local-store
-                        (path :entries)])
+(def todo-interceptors 
+  [
+    check-spec-interceptor
+    ->local-store-interceptor
+    (path :entries)])
+
+(def form-interceptors 
+  [
+    check-spec-interceptor
+    (path :new-form)])
 
 ;; -- Helpers -----------------------------------------------------------------
 
@@ -90,9 +97,40 @@
   (fn [entries [_ id]]
     (dissoc entries id)))
 
-; (reg-event-db
-;   :toggle-done
-;   todo-interceptors
-;   (fn [todos [_ id]]
-;     (update-in todos [id :done] not)))
+(reg-event-db
+  :update-form-text
+  form-interceptors
+  (fn [content [_ text]]
+    (assoc content :text text)))
+(reg-event-db
+  :update-form-date
+  form-interceptors
+  (fn [content [_ date]]
+    (assoc content :date date)))
+
+(defn extract-new-entry
+  [db]
+  (let [
+        {:keys [text date]} (:new-form db)]
+    (assoc 
+      (get-in db [:new-form])
+      :id (generate-id)
+      :timeline-id (generate-id)
+      :text (get-in db [:new-form :text])
+      :edition-date "17/05/2019")))
+
+(defn commit-new-entry
+  [db]
+  (let [new-entry (extract-new-entry db)]
+    (-> 
+      db
+      (ndb/add-entry new-entry)
+      (ndb/reset-form))))      
+
+(reg-event-db
+  :submit-new-entry
+  [
+    check-spec-interceptor
+    ->local-store-interceptor]
+  commit-new-entry)
 

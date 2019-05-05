@@ -21,34 +21,52 @@
                                       13 (save)
                                       27 (stop)
                                       nil)})])))
-  
 
-(defn create-complete-entry
-  [content date]
-  ; no need for a cas loop for CLJS, single threaded
-  (let [c @content d @date]
-    (when (and (not (str/blank? c)) (not (str/blank? d)))
-      (do
-        (dispatch :add-entry c d)
-        (reset! content "")
-        (reset! date "")))))
 
+(defn controlled-input [props]
+  (let [{:keys [value on-change]} props
+        other-props (dissoc props :on-change :value)]
+    [:input
+      (merge
+        other-props
+        {
+          :type        "text"
+          :value       value
+          :on-change   #(on-change (-> % .-target .-value))})]))
+
+
+; (defn create-complete-entry
+;   [content date]
+;   ; no need for a cas loop for CLJS, single threaded
+;   (let [c @content d @date]
+;     (when (and (not (str/blank? c)) (not (str/blank? d)))
+;       (do
+;         (dispatch :add-entry c d)
+;         (reset! content "")
+;         (reset! date "")))))
+(defn form-submit-props
+  [entry]
+  (let [disabled-props (if (:valid? entry) {} {:disabled "disabled"})]
+    (assoc 
+      disabled-props 
+      :on-click (fn [_] (dispatch [:submit-new-entry])))))
 
 (defn new-entry-form [{:keys [on-save on-cancel]}]
-  (let [content (r/atom "")
-        target-date (r/atom "")
-        do-save (fn [_] create-complete-entry content target-date)]
+  (let [content (subscribe [:new-form])
+        do-save (fn [_] nil)]
     (fn [props]
       ^{:key (:id props)}
       [:div
-        [entry-input
+        [controlled-input
           { :placeholder "What do you think about the future?"
-            :on-save do-save}]
-        [entry-input
+            :value (get-in @content [:entry :text])
+            :on-change #(dispatch [:update-form-text %])}]
+        [controlled-input
           { :placeholder "Target date"
-            :on-save do-save}]
-        [:button 
-          {:on-click #(do-save nil)}
+            :value (get-in @content [:entry :date])
+            :on-change #(dispatch [:update-form-date %])}]
+        [:button
+          (form-submit-props @content)
           "Submit"]])))
 
 

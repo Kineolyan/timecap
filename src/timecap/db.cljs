@@ -59,7 +59,7 @@
     {
       :new-form
       { 
-        :text ""
+        :text "Be the world leader"
         :date "12/04/2017"}
       :entries 
       {
@@ -71,6 +71,21 @@
           :timeline-id (generate-id)
           :edition-date "24/03/2019"}}}))
 
+;; -- Db operations -------------------------------------------
+
+(defn add-entry
+  [db entry]
+  (let [new-entries (-> db (:entries) (assoc (:id entry) entry))]
+    (assoc db :entries new-entries)))
+
+(defn reset-form
+  (
+    [db]
+    (reset-form db {:text "" :date ""})) 
+  (
+    [db reset-value]
+    (assoc db :new-form reset-value)))
+
 ;; -- Local Storage  ----------------------------------------------------------
 
 (def app-version 3)
@@ -81,7 +96,6 @@
   (.setItem js/localStorage ls-key (str {
                                           :db (dissoc db :new-form) 
                                           :version app-version})))
-
 
 ;; -- cofx Registrations  -----------------------------------------------------
 
