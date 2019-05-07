@@ -41,17 +41,6 @@
 
 ;; usage:  (dispatch [:initialise-db])
 ;;
-;; This event is dispatched in the app's `main` (core.cljs).
-;; It establishes initial application state in `app-db`.
-;; That means merging:
-;;   1. Any todos stored in LocalStore (from the last session of this app)
-;;   2. Default initial values
-;;
-;; Advanced topic:  we inject the todos currently stored in LocalStore
-;; into the first, coeffect parameter via use of the interceptor
-;;    `(inject-cofx :local-store-timecap)`
-; Special function to test if the stored content a version.
-; Given that the stored content is unknown, its structure may not be a map as expected
 (defn get-stored-version
   [content]
   (cond

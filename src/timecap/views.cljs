@@ -44,19 +44,26 @@
 ;         (dispatch :add-entry c d)
 ;         (reset! content "")
 ;         (reset! date "")))))
+(defn submit-new-form
+  [e]
+  (do
+    (.preventDefault e)
+    (dispatch [:submit-new-entry])))
 (defn form-submit-props
   [entry]
   (let [disabled-props (if (:valid? entry) {} {:disabled "disabled"})]
     (assoc 
       disabled-props 
-      :on-click (fn [_] (dispatch [:submit-new-entry])))))
+      :type "submit"
+      :on-click submit-new-form)))
 
 (defn new-entry-form [{:keys [on-save on-cancel]}]
   (let [content (subscribe [:new-form])
         do-save (fn [_] nil)]
     (fn [props]
       ^{:key (:id props)}
-      [:div
+      [:form#new-entry
+        {:on-submit submit-new-form}
         [controlled-input
           { :placeholder "What do you think about the future?"
             :value (get-in @content [:entry :text])

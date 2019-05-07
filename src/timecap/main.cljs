@@ -49,8 +49,9 @@
 ;;
 (defn render-app
   []
-  (reagent/render [timecap.views/app]
-                  (.getElementById js/document "app")))
+  (reagent/render 
+    [timecap.views/app]
+    (.getElementById js/document "app")))
                 
 (defn ^:export main
   []
