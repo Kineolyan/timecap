@@ -23,6 +23,16 @@
         :entry content
         :valid? valid?})))
 
+(reg-sub
+  :timeline-form
+  (fn [db _]
+    (let [content (:timeline-form db)
+          valid? (not (empty? (:name content)))]
+      {
+        :timeline content
+        :valid? valid?})))
+
+
 ;; -------------------------------------------------------------------------------------
 ;; Layer 2
 ;;

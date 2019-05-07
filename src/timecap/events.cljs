@@ -28,6 +28,11 @@
     check-spec-interceptor
     (path :new-form)])
 
+(def timeline-form-interceptors
+  [
+    check-spec-interceptor
+    (path :timeline-form)])
+  
 ;; -- Helpers -----------------------------------------------------------------
 
 (defn allocate-next-id
@@ -122,4 +127,10 @@
     check-spec-interceptor
     ->local-store-interceptor]
   commit-new-entry)
+
+(reg-event-db
+  :update-timeline-name
+  timeline-form-interceptors
+  (fn [content [_ value]]
+    (assoc content :name value)))
 

@@ -35,10 +35,21 @@
 (s/def ::date a-date?)
 (s/def ::edition-date a-date?)
 (s/def ::timeline-id string?)
+(s/def ::name string?)
+
+(s/def ::timeline (s/keys :req-un [::id ::name]))
+(s/def ::timelines (s/map-of ::id ::timeline))
+
 (s/def ::entry (s/keys :req-un [::id ::text ::date ::timeline-id ::edition-date]))
 (s/def ::entries (s/map-of ::id ::entry))
+
 (s/def ::new-form (s/keys :req-un [::text ::date] :opt [::timeline-id]))
-(s/def ::db (s/keys :req-un [::entries ::new-form]))
+(s/def ::timeline-form (s/keys :req-un [::name]))
+(s/def ::db (s/keys :req-un [
+                              ::entries  
+                              ::new-form 
+                              ::timelines
+                              ::timeline-form]))
 
 ;; -- Default app-db Value  ---------------------------------------------------
 ;;
@@ -64,12 +75,22 @@
   
 
 (def default-db
-  (let [first-id (generate-id)]
+  (let [first-id (generate-id)
+        main-timeline (generate-id)]
     {
+      :timeline-form 
+      {
+        :name ""}
       :new-form
       { 
         :text "Be the world leader"
         :date "12/04/2017"}
+      :timelines
+      {
+        main-timeline
+        {
+          :id main-timeline
+          :name "<main>"}}
       :entries 
       {
         first-id
@@ -77,7 +98,7 @@
           :id first-id
           :text "Quand je serai vieux, Je ne serai pas chiant."
           :date "13/09/2048"
-          :timeline-id (generate-id)
+          :timeline-id main-timeline
           :edition-date "24/03/2019"}}}))
 
 ;; -- Db operations -------------------------------------------
@@ -89,9 +110,7 @@
 (defn is-valid-new-timeline-id?
   [db id]
   (not 
-    (some
-      #{id}  
-      (map #(:timeline-id %) (-> db (:entries) (vals))))))
+    (contains? (:timelines db) id)))
 
 (defn add-entry
   [db entry]
