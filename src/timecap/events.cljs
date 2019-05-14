@@ -118,6 +118,11 @@
   form-interceptors
   (fn [content [_ date]]
     (assoc content :date date)))
+(reg-event-db
+  :update-entry-timeline
+  form-interceptors
+  (fn [content [_ id]]
+    (assoc content :timeline-id id)))
 
 (defn extract-new-entry
   [db]

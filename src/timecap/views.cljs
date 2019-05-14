@@ -53,8 +53,9 @@
     [:div
       [f-timeline/new-timeline-form
         {:id "new-timeline"}]
+      [timeline-list]]
+    [:div  
       [f-entry/new-entry-form
-        {:id "new-entry"}]]
-    [timeline-list]
-    [entry-list]])
+        {:id "new-entry"}]
+      [entry-list]]])
 

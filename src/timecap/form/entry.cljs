@@ -31,6 +31,10 @@
           { :placeholder "Target date"
             :value (get-in @content [:entry :date])
             :on-change #(dispatch [:update-form-date %])}]
+        [controlled-input
+          { :placeholder "Timeline"
+            :value (get-in @content [:entry :timeline-id])
+            :on-change #(dispatch [:update-entry-timeline %])}]
         [:button
           (form-submit-props @content)
           "Submit"]])))

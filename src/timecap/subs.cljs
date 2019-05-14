@@ -21,7 +21,8 @@
   [{:keys [text timeline-id date]}]
   (and
     (not (str/blank? text))
-    (not (str/blank? date))))
+    (not (str/blank? date))
+    (not (str/blank? timeline-id))))
 
 (reg-sub
   :new-form
