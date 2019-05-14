@@ -1,6 +1,6 @@
 (ns timecap.events
   (:require
-    [timecap.db    :as ndb :refer [default-db timecap->local-store generate-id]]
+    [timecap.db    :as db :refer [default-db timecap->local-store generate-id]]
     [re-frame.core :refer [reg-event-db reg-event-fx inject-cofx path after]]
     [cljs.spec.alpha :as s]))
 
@@ -32,7 +32,13 @@
   [
     check-spec-interceptor
     (path :timeline-form)])
+
+(def submit-interceptors
+  [
+    check-spec-interceptor
+    ->local-store-interceptor])
   
+
 ;; -- Helpers -----------------------------------------------------------------
 
 (defn allocate-next-id
@@ -55,10 +61,21 @@
 (defn integrate-local-storage
   [current-content stored-content]
   (let [ stored-version (get-stored-version stored-content)]
-    (if (= timecap.db/app-version stored-version)
-        {:db (assoc current-content :entries (get-in stored-content [:db :entries]))}
-        ; drop the stored content
-        {:db current-content})))
+    (case stored-version
+      3 
+      {:db (assoc 
+              current-content 
+              :entries 
+              (get-in stored-content [:db :entries]))}
+      4
+      {:db (assoc
+              current-content
+              :entries
+              (get-in stored-content [:db :entries])
+              :timelines
+              (get-in stored-content [:db :timelines]))}
+      ; drop the stored content
+      {:db current-content})))
 (reg-event-fx  
   :initialise-db
   [
@@ -108,8 +125,8 @@
         {:keys [text date]} (:new-form db)]
     (assoc 
       (get-in db [:new-form])
-      :id (generate-id #(ndb/is-valid-new-entry-id? db %))
-      :timeline-id (generate-id #(ndb/is-valid-new-timeline-id? db %))
+      :id (generate-id #(db/is-valid-new-entry-id? db %))
+      :timeline-id (generate-id #(db/is-valid-new-timeline-id? db %))
       :text (get-in db [:new-form :text])
       :edition-date "17/05/2019")))
 
@@ -118,14 +135,12 @@
   (let [new-entry (extract-new-entry db)]
     (-> 
       db
-      (ndb/add-entry new-entry)
-      (ndb/reset-form))))      
+      (db/add-entry new-entry)
+      (db/reset-form))))      
 
 (reg-event-db
   :submit-new-entry
-  [
-    check-spec-interceptor
-    ->local-store-interceptor]
+  submit-interceptors
   commit-new-entry)
 
 (reg-event-db
@@ -134,3 +149,22 @@
   (fn [content [_ value]]
     (assoc content :name value)))
 
+(defn extract-new-timeline
+  [db]
+  (let [{:keys [name]} (:timeline-form db)]
+    {
+      :id (generate-id #(db/is-valid-new-timeline-id? db %))
+      :name name}))
+
+(defn commit-new-timeline
+  [db]
+  (let [new-timeline (extract-new-timeline db)]
+    (->
+      db
+      (db/add-timeline new-timeline)
+      (db/reset-timeline-form))))
+
+(reg-event-db
+  :submit-new-timeline
+  submit-interceptors
+  commit-new-timeline)

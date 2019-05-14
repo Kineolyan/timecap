@@ -6,7 +6,8 @@
 
 (defn submit-new-timeline
   [e]
-  (.preventDefault e))
+  (.preventDefault e)
+  (dispatch [:submit-new-timeline]))
 (defn new-timeline-form
   [_]
   (let [content (subscribe [:timeline-form])]

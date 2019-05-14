@@ -5,7 +5,16 @@
 (reg-sub
   :entries
   (fn [db _]
-    (vals (:entries db))))
+    (or 
+      (vals (:entries db)) 
+      [])))
+
+(reg-sub
+  :timelines
+  (fn [db _]
+    (or 
+      (vals (:timelines db)) 
+      [])))
 
 (defn valid-new-entry?
   "Checks if a new entry is valid and can be added to the DB"

@@ -112,10 +112,11 @@
   (not 
     (contains? (:timelines db) id)))
 
+(defn index-by-id [l entry] (assoc l (:id entry) entry))
+
 (defn add-entry
   [db entry]
-  (let [new-entries (-> db (:entries) (assoc (:id entry) entry))]
-    (assoc db :entries new-entries)))
+  (update-in db [:entries] #(index-by-id % entry)))
 
 (defn reset-form
   (
@@ -125,16 +126,32 @@
     [db reset-value]
     (assoc db :new-form reset-value)))
 
+(defn add-timeline
+  [db entry]
+  (update-in db [:timelines] #(index-by-id % entry)))
+
+(defn reset-timeline-form
+  (
+    [db]
+    (reset-timeline-form db {:name ""})) 
+  (
+    [db reset-value]
+    (assoc db :timeline-form reset-value)))
+
 ;; -- Local Storage  ----------------------------------------------------------
 
-(def app-version 3)
+(def app-version 4)
 (def ls-key "timecap-reframe")
 (defn timecap->local-store
   "Puts time-cap into localStorage"
   [db]
-  (.setItem js/localStorage ls-key (str {
-                                          :db (dissoc db :new-form) 
-                                          :version app-version})))
+  (.setItem 
+    js/localStorage 
+    ls-key 
+    (str 
+      {
+        :db (select-keys db [:entries :timelines])
+        :version app-version})))
 
 ;; -- cofx Registrations  -----------------------------------------------------
 

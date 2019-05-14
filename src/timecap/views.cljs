@@ -23,13 +23,29 @@
 
 
 (defn entry-list
-  []
-  (let [entries @(subscribe [:entries])]
+  [_]
+  (let [entries (subscribe [:entries])]
+    (fn [_]
       [:section#main
+        [:h3 "Time Capsules"]
         [:ul#todo-list
-          (for [entry entries]
-            ^{:key (:id entry)} [entry-item entry])]]))
+          (for [entry @entries]
+            ^{:key (:id entry)} [entry-item entry])]])))
 
+(defn timeline-entry
+  [timeline]
+  ^{:key (:id timeline)} [:li 
+                            (:name timeline)
+                            [:i (str " (<<" (:id timeline) ">>)")]])
+
+(defn timeline-list
+  [_]
+  (let [timelines (subscribe [:timelines])]
+    (fn [_]
+      [:section#timelines
+        [:h3 "Timelines"]
+        [:ul
+          (for [timeline @timelines] (timeline-entry timeline))]])))
 
 (defn app
   []
@@ -39,4 +55,6 @@
         {:id "new-timeline"}]
       [f-entry/new-entry-form
         {:id "new-entry"}]]
-    (entry-list)])
+    [timeline-list]
+    [entry-list]])
+
