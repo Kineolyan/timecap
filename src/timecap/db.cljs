@@ -2,7 +2,10 @@
   (:require [cljs.reader]
             [cljs.spec.alpha :as s]
             [re-frame.core :as re-frame]
-            [goog.string :as jstrings]))
+            [goog.string :as jstrings]
+            [cljs-time.core :as time]
+            [cljs-time.format :as ptime]))
+
 
 ;; -- Spec --------------------------------------------------------------------
 ;;
@@ -32,8 +35,8 @@
   (string? value))
 (s/def ::id string?)
 (s/def ::text string?)
-(s/def ::date a-date?)
-(s/def ::edition-date a-date?)
+(s/def ::date time/date?)
+(s/def ::edition-date time/date?)
 (s/def ::timeline-id string?)
 (s/def ::name string?)
 
@@ -84,7 +87,7 @@
       :new-form
       { 
         :text "Be the world leader"
-        :date "12/04/2017"}
+        :date (time/local-date 2019 4 12)}
       :timelines
       {
         main-timeline
@@ -97,11 +100,28 @@
         {
           :id first-id
           :text "Quand je serai vieux, Je ne serai pas chiant."
-          :date "13/09/2048"
+          :date (time/local-date 2048 9 13)
           :timeline-id main-timeline
-          :edition-date "24/03/2019"}}}))
+          :edition-date (time/local-date 2019 3 24)}}}))
 
 ;; -- Db operations -------------------------------------------
+
+(def storage-formatter (ptime/formatters :basic-time))
+(def form-formatter (ptime/formatter "dd/MM/yyyy"))
+(defn store->date [value] (ptime/parse storage-formatter value))
+(defn date->store [value] (ptime/unparse storage-formatter value))
+(defn date->form [value] (ptime/unparse form-formatter value))
+(defn form->date [value] (ptime/parse form-formatter value))
+
+
+(defn transform-entry
+  "Converts a stored entry to the format of the db. This consists of changing date strings to objects"
+  [entry date-transformer]
+  (->
+    entry
+    (update-in [:date] date-transformer)
+    (update-in [:edition-date] date-transformer)))
+
 
 (defn is-valid-new-entry-id?
   [db id]
@@ -140,7 +160,7 @@
 
 ;; -- Local Storage  ----------------------------------------------------------
 
-(def app-version 4)
+(def app-version 5)
 (def ls-key "timecap-reframe")
 (defn timecap->local-store
   "Puts time-cap into localStorage"
@@ -150,7 +170,13 @@
     ls-key 
     (str 
       {
-        :db (select-keys db [:entries :timelines])
+        :db {
+              :timelines (or (vals (:timelines db)) [])
+              :entries (or
+                          (map
+                            #(transform-entry % date->store)
+                            (vals (:entries db)))
+                          [])}
         :version app-version})))
 
 ;; -- cofx Registrations  -----------------------------------------------------

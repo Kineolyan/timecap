@@ -1,7 +1,8 @@
 (ns timecap.form.entry
   (:require 
     [re-frame.core :refer [subscribe dispatch]]
-    [timecap.form.cpns :refer [controlled-input]]))
+    [timecap.form.cpns :refer [controlled-input]]
+    [timecap.db :refer [date->form]]))
 
 
 (defn submit-new-form
@@ -29,7 +30,7 @@
             :on-change #(dispatch [:update-form-text %])}]
         [controlled-input
           { :placeholder "Target date"
-            :value (get-in @content [:entry :date])
+            :value (date->form (get-in @content [:entry :date]))
             :on-change #(dispatch [:update-form-date %])}]
         [controlled-input
           { :placeholder "Timeline"

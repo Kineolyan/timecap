@@ -2,7 +2,7 @@
   :dependencies [
                   [org.clojure/clojure "1.9.0"]
                   [reagent "0.8.1"]
-                  [re-frame "0.10.5"]
+                  [re-frame "0.10.6"]
                   [binaryage/devtools "0.9.10"]
                   [day8.re-frame/tracing "0.5.1"]
                   [clj-commons/secretary "1.2.4"]

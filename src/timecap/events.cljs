@@ -58,22 +58,36 @@
     (not (map? content)) nil
     (not (some #{:version} (keys content))) nil
     :else (:version content)))
+
 (defn integrate-local-storage
   [current-content stored-content]
   (let [ stored-version (get-stored-version stored-content)]
     (case stored-version
-      3 
-      {:db (assoc 
-              current-content 
-              :entries 
-              (get-in stored-content [:db :entries]))}
-      4
+      ; 3 
+      ; {:db (assoc 
+      ;         current-content 
+      ;         :entries 
+      ;         (get-in stored-content [:db :entries]))}
+      ; 4
+      ; {:db (assoc
+      ;         current-content
+      ;         :entries
+      ;         (get-in stored-content [:db :entries])
+      ;         :timelines
+      ;         (get-in stored-content [:db :timelines]))}
+      5
       {:db (assoc
               current-content
-              :entries
-              (get-in stored-content [:db :entries])
-              :timelines
-              (get-in stored-content [:db :timelines]))}
+              :entries (reduce 
+                          db/index-by-id 
+                          {} 
+                          (map
+                            #(db/transform-entry % db/store->date)
+                            (get-in stored-content [:db :entries])))
+              :timelines (reduce 
+                            db/index-by-id 
+                            {} 
+                            (get-in stored-content [:db :timelines])))}
       ; drop the stored content
       {:db current-content})))
 (reg-event-fx  

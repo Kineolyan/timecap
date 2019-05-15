@@ -43,7 +43,7 @@
   (let [timelines (subscribe [:timelines])]
     (fn [_]
       [:section#timelines
-        [:h3 "Timelines"]
+        [:h3 "-- Timelines --"]
         [:ul
           (for [timeline @timelines] (timeline-entry timeline))]])))
 

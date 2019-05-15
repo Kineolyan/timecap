@@ -49,6 +49,7 @@
 ;;
 (defn render-app
   []
+  (re-frame.core/clear-subscription-cache!)
   (reagent/render 
     [timecap.views/app]
     (.getElementById js/document "app")))
